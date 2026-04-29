@@ -48,6 +48,13 @@ export interface GenerationSummary {
 
 type TokenGetter = () => Promise<string | null>;
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+/** Build a full URL for an /api/... path. With no base, returns the path as-is so the Vite dev proxy can handle it. */
+function apiUrl(path: string): string {
+  return API_BASE ? `${API_BASE}${path}` : path;
+}
+
 async function authHeaders(getToken: TokenGetter): Promise<HeadersInit> {
   const token = await getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -75,7 +82,7 @@ export async function generateReport(
   fd.append("size", size);
   fd.append("quality", quality);
 
-  const r = await fetch("/api/report", {
+  const r = await fetch(apiUrl("/api/report"), {
     method: "POST",
     body: fd,
     headers: await authHeaders(getToken),
@@ -85,7 +92,7 @@ export async function generateReport(
 }
 
 export async function getMe(getToken: TokenGetter): Promise<UserProfile> {
-  const r = await fetch("/api/me", { headers: await authHeaders(getToken) });
+  const r = await fetch(apiUrl("/api/me"), { headers: await authHeaders(getToken) });
   if (!r.ok) await handleError(r);
   return r.json();
 }
@@ -94,7 +101,7 @@ export async function updateMe(
   getToken: TokenGetter,
   payload: UserUpdatePayload
 ): Promise<UserProfile> {
-  const r = await fetch("/api/me", {
+  const r = await fetch(apiUrl("/api/me"), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...(await authHeaders(getToken)) },
     body: JSON.stringify(payload),
@@ -108,7 +115,7 @@ export async function listMyGenerations(
   limit = 20,
   includeImage = false
 ): Promise<GenerationSummary[]> {
-  const url = `/api/me/generations?limit=${limit}&include_image=${includeImage}`;
+  const url = apiUrl(`/api/me/generations?limit=${limit}&include_image=${includeImage}`);
   const r = await fetch(url, { headers: await authHeaders(getToken) });
   if (!r.ok) await handleError(r);
   return r.json();
@@ -118,7 +125,7 @@ export async function getMyGeneration(
   getToken: TokenGetter,
   id: number
 ): Promise<GenerationSummary> {
-  const r = await fetch(`/api/me/generations/${id}`, {
+  const r = await fetch(apiUrl(`/api/me/generations/${id}`), {
     headers: await authHeaders(getToken),
   });
   if (!r.ok) await handleError(r);

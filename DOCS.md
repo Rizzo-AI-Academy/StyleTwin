@@ -419,7 +419,16 @@ STORE_IMAGES_IN_DB=true
 
 ```
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_…
+
+# Backend base URL.
+# Empty in dev: the Vite proxy forwards /api -> http://localhost:8000.
+# In production set to the deployed backend origin (e.g. https://api.styletwin.app).
+VITE_API_BASE_URL=
 ```
+
+The frontend client ([src/api.ts](frontend/src/api.ts)) prefixes every request with
+`VITE_API_BASE_URL` when set, otherwise falls back to relative `/api/...` paths so the Vite
+dev proxy or a same-origin reverse proxy can route them.
 
 ---
 
