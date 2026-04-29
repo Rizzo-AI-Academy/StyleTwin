@@ -1,18 +1,27 @@
 :{$PORT:3000} {
-	root * /app/dist
 	encode gzip zstd
-	try_files {path} /index.html
-	file_server
 	log {
 		output stdout
 		format console
 	}
-	header {
-		# Disable caching of HTML so users always get the latest index.html
-		?Cache-Control "no-cache"
+
+	# Reverse-proxy /api/* to the backend via Railway's private network.
+	# BACKEND_URL is set per-environment, e.g.
+	#   http://rare-contentment.railway.internal:8080  (production, private)
+	#   http://localhost:8000                          (local dev, if ever used)
+	handle /api/* {
+		reverse_proxy {$BACKEND_URL:http://localhost:8000}
 	}
-	@static {
-		path *.css *.js *.png *.jpg *.jpeg *.svg *.webp *.ico *.woff *.woff2
+
+	# Everything else: serve the built SPA
+	handle {
+		root * /app/dist
+
+		@static path *.css *.js *.png *.jpg *.jpeg *.svg *.webp *.ico *.woff *.woff2
+		header @static Cache-Control "public, max-age=31536000, immutable"
+		header /index.html Cache-Control "no-cache"
+
+		try_files {path} /index.html
+		file_server
 	}
-	header @static Cache-Control "public, max-age=31536000, immutable"
 }

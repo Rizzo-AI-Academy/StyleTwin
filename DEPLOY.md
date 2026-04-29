@@ -52,10 +52,26 @@ collegati alla stessa repo GitHub.
    | Key | Value |
    |---|---|
    | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_cG9ldGljLXN0YWxsaW9uLTY0…` |
-   | `VITE_API_BASE_URL` | `https://styletwin-backend.up.railway.app` (dominio del BE) |
+   | `VITE_API_BASE_URL` | *(lasciare vuota — vedi nota sotto)* |
+   | `BACKEND_URL` | `http://<backend-service>.railway.internal:8080` (URL **interna** del BE) |
+
+   **Strategia di routing**: Caddy nel frontend fa reverse-proxy di `/api/*` verso
+   il backend sulla rete privata di Railway. Il browser parla solo con il dominio HTTPS
+   del frontend (stessa origine → niente CORS, niente mixed content), Caddy inoltra
+   internamente. Vantaggi:
+   - Nessun egress fee per le chiamate API
+   - Backend non ha bisogno di un dominio pubblico
+   - Niente headers CORS lato server (puoi anche restringere `CORS_ORIGINS` solo al
+     dominio del frontend, ma in realtà tutte le chiamate arrivano same-origin)
+
+   `BACKEND_URL` lo trovi su Railway → servizio backend → **Settings → Networking →
+   Private Networking**. Formato: `http://<service-name>.railway.internal:<PORT>`.
+   La porta è quella che il BE espone (di default Railway usa 8080 internamente quando
+   il container ascolta su `$PORT`).
 
    > ⚠️ Le `VITE_*` sono **inlined al build**. Se le cambi, devi triggerare un redeploy
-   > (Settings → Redeploy).
+   > (Settings → Redeploy). `BACKEND_URL` invece è letta runtime dal Caddy, basta
+   > restartare.
 
 5. **Deploy**: build via Nixpacks (`npm ci && npm run build`), start via `npm start`
    che lancia `serve -s dist -l tcp://0.0.0.0:$PORT` con SPA fallback.
