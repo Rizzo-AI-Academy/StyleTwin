@@ -1,8 +1,17 @@
-# Force Nixpacks to use `npm install` instead of `npm ci`.
-# `npm ci` is strict about the lockfile and rejects platform-specific optional
-# deps that aren't listed (e.g. @rollup/rollup-linux-x64-gnu when the lockfile
-# was generated on Windows). `npm install` resolves the right binary at runtime.
-# See https://github.com/npm/cli/issues/4828
+# Force `npm install` instead of `npm ci` to work around the npm bug with
+# Rollup's platform-specific optional deps (lockfile generated on Windows
+# misses @rollup/rollup-linux-x64-gnu). See https://github.com/npm/cli/issues/4828
+
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-10_x", "caddy"]
 
 [phases.install]
 cmds = ["npm install --no-audit --no-fund"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "caddy run --config /app/Caddyfile --adapter caddyfile"
