@@ -1,11 +1,14 @@
-# Force `npm install` instead of `npm ci` to work around the npm bug with
-# Rollup's platform-specific optional deps (lockfile generated on Windows
-# misses @rollup/rollup-linux-x64-gnu). See https://github.com/npm/cli/issues/4828
+# We override only what we need:
+# - install: use `npm install` instead of `npm ci` to work around the npm bug
+#   with Rollup's platform-specific optional deps (lockfile generated on
+#   Windows misses @rollup/rollup-linux-x64-gnu).
+#   See https://github.com/npm/cli/issues/4828
+# - start: run our own Caddyfile (SPA fallback + cache headers).
+#
+# We DO NOT add `caddy` to setup.nixPkgs: Nixpacks auto-installs it for static
+# Vite apps, and adding it again creates a Nix profile conflict.
 
 providers = ["node"]
-
-[phases.setup]
-nixPkgs = ["nodejs_20", "npm-10_x", "caddy"]
 
 [phases.install]
 cmds = ["npm install --no-audit --no-fund"]
